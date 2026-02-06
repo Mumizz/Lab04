@@ -1,7 +1,7 @@
 ---
 title: "Lab 04 - La Quinta is Spanish for next to Denny's, Pt. 1"
-author: "Insert your name here"
-date: "Insert date here"
+author: "Barbara Mu"
+date: "02/05/2026"
 output: github_document
 ---
 
@@ -16,36 +16,158 @@ library(dsbox)
 states <- read_csv("data/states.csv")
 ```
 
+```{r}
+dn <- dennys
+lq <- laquinta
+```
+
 ### Exercise 1
 
-Remove this text, and add your answer for Exercise 1 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
+```{r dimensions of denny}
+nrow(dn)
+ncol(dn)
+```
+
+The Denny's dataset has 1643 observations (row) and 6 variablies (column), Each row represents one Denny's restaurant location. Variables includes the restaurant’s address, city, state, ZIP code, longitude ,and latitude.
+
+
 
 ### Exercise 2
 
-Remove this text, and add your answer for Exercise 2 here.
-Add code chunks as needed.
-Don't forget to label your code chunk.
-Do not use spaces in code chunk labels.
+```{r dimensions of La Quinta}
+nrow(lq)
+ncol(lq)
+```
+
+The La Quinta's dataset has 909 observations (row) and 6 variables (column), Each row represents one hotel location. Variables includes the restaurant’s address, city, state, ZIP code, longitude ,and latitude.
+
 
 ### Exercise 3
 
-...
+Yes, both list locations outside of the US on their webpages. Denny's shows the locations in many countries, such as Canada and Mexico, and also locations in Latin America and Asia. La Quinta shows locations outside of the US as well. They seems to have branchs in every continents, for example, they have Greece, Hungry, France, Finland, etc. 
 
 ### Exercise 4
 
-...
+I would first look for 'states' values that are not valid US state abbreviations. Any records with a non-US 'state' code are likely outside-US locations. I could also check whether the 'Zip code' match the US Zip format (5 digits). Non-US postcode may contain letters or in different lengths, for example, my UK address is EH3 9QG.I could also use the 'latitude' and 'longitude', as US locations should fall within US coordinate ranges. Locations far outside those range would strongly suggest locations outside the US. Finally, the 'city' may just be treated as a checker, as many city names in the US are the same as some in the UK and Europe; in this way, we cannot judge whether an address is outside of the US just by its city name. Additionally, there is a more direct, but crazy way to do it - just copy and paste the addresses into google map. 
 
 ### Exercise 5
 
-...
+```{r}
+dn %>%
+  filter(!(state %in% states$abbreviation))
+```
+
+No Denny’s locations outside the US (in this dataset)
 
 ### Exercise 6
 
-...
+```{r}
+dn %>%
+  mutate(country = "United States")
+```
 
- 
-Add exercise headings as needed.
+### Exercise 7
+
+```{r}
+lq_outside <- lq %>%
+  filter(!(state %in% states$abbreviation))
+
+lq_outside %>% count(state, sort = TRUE)
+```
+
+Filtering La Quinta locations to those with non-US state abbreviations shows international locations in Mexico (AG, QR, CH, NL, VE, PU, SL), Canada (ON, BC), Colombia (ANT), and Honduras (FM). Based on the city names and coordinates, NL corresponds to Nuevo León (Mexico) and FM corresponds to Francisco Morazán (Honduras).
+
+### Exercise 8 
+
+```{r}
+lq <- lq %>%
+  mutate(country = case_when(
+    state %in% state.abb ~ "United States",
+    state %in% c("ON", "BC") ~ "Canada",
+    state == "ANT" ~ "Colombia",
+    state %in% c("AG", "CH", "NL", "PU", "QR", "SL", "VE") ~ "Mexico",
+    state == "FM" ~ "Honduras",
+    TRUE ~ NA_character_
+  ))
+
+```
+
+```{r}
+lq %>% count(country, sort = TRUE)
+```
+
+```{r}
+lq <- lq %>%
+  filter(country == "United States")
+```
+
+### Exercise 9 
+
+```{r}
+dn %>%
+  count(state, sort = TRUE) %>%
+  inner_join(states, by = c("state" = "abbreviation")) 
+```
+
+For Denny's dataset, they have the most locations in California and the fewest locations in Delaware. 
+
+```{r}
+lq %>%
+  count(state, sort = TRUE) %>%
+  inner_join(states, by = c("state" = "abbreviation")) 
+```
+
+For La Quinta, it has the most hotels in Texas and the fewest in Maine. 
+
+### Exercise 10 
+
+```{r}
+dn <- dn %>%
+  mutate(establishment = "Denny's")
+lq <- lq %>%
+  mutate(establishment = "La Quinta")
+```
+
+```{r}
+dn_lq <- bind_rows(dn, lq)
+```
+
+```{r}
+ggplot(dn_lq, mapping = aes(
+  x = longitude,
+  y = latitude,
+  color = establishment
+)) +
+  geom_point()
+```
+
+### Exercise 11
+
+```{r}
+dn_lq %>% 
+  filter(state == "NC") %>% 
+  ggplot(dn_lq, mapping = aes(
+  x = longitude,
+  y = latitude,
+  color = establishment)) +
+  geom_point(alpha = 0.6) 
+  
+```
+
+
+### Exercise 12 
+
+```{r}
+dn_lq %>% 
+  filter(state == "TX") %>% 
+  ggplot(dn_lq, mapping = aes(
+  x = longitude,
+  y = latitude,
+  color = establishment)) +
+  geom_point(alpha = 0.3) 
+  
+```
+
+
+
 
